@@ -83,7 +83,6 @@
         }
 
         function getPattern() {
-            console.log(dots)
             return parseInt(code.map((i) => dots.index(i)+1).join(''))
         }
 
@@ -98,7 +97,6 @@
                 for (_dotNum in dots) {
                     if (parseInt(_num) == counter) {
                         actives.append(createNewMarker(dots[_dotNum].getAttribute('cx'), dots[_dotNum].getAttribute('cy')))
-                        console.log(lastCords)
                         if (!isFirst) {
                             let _points = {
                                 x1: parseInt(lastCords.x),
@@ -107,7 +105,6 @@
                                 y2: parseInt(dots[_dotNum].getAttribute('cy')),
                             }
 
-                            console.log(_points);
                             lines.append(createNewLine(_points.x1, _points.y1, _points.x2, _points.y2))
 
                             let _rot = getArrowRot(_points.x1, _points.x2, _points.y1, _points.y2)
