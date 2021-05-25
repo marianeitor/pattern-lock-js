@@ -44,6 +44,7 @@
         let dots = svg.find('.lock-dots circle')
         let lines = svg.find('.lock-lines')
         let actives = svg.find('.lock-actives')
+        let arrows = svg.find('.lock-arrows')
         var pt = root.createSVGPoint();
         let code = []
         let currentline
@@ -68,6 +69,7 @@
             success,
             error,
             getPattern,
+            setPattern,
         })
 
         function success() {
@@ -81,7 +83,47 @@
         }
 
         function getPattern() {
+            console.log(dots)
             return parseInt(code.map((i) => dots.index(i)+1).join(''))
+        }
+
+        function setPattern(_code) {
+            clear();
+            /*arrows.append(createNewArrow(35,20))*/
+            let numbers = _code.toString().split('');
+            let isFirst = true;
+            let lastCords = {x: 0, y: 0};
+            numbers.map(_num => {
+                let counter = 1;
+                for (_dotNum in dots) {
+                    if (parseInt(_num) == counter) {
+                        actives.append(createNewMarker(dots[_dotNum].getAttribute('cx'), dots[_dotNum].getAttribute('cy')))
+                        console.log(lastCords)
+                        if (!isFirst) {
+                            let _points = {
+                                x1: parseInt(lastCords.x),
+                                y1: parseInt(lastCords.y),
+                                x2: parseInt(dots[_dotNum].getAttribute('cx')),
+                                y2: parseInt(dots[_dotNum].getAttribute('cy')),
+                            }
+
+                            console.log(_points);
+                            lines.append(createNewLine(_points.x1, _points.y1, _points.x2, _points.y2))
+
+                            let _rot = getArrowRot(_points.x1, _points.x2, _points.y1, _points.y2)
+                            arrows.append(createNewArrow(_points.x1 + (_points.x2-_points.x1)/2,_points.y1 + (_points.y2-_points.y1)/2, _rot))
+                        }
+                        else {
+                            isFirst = false;
+                        }
+
+                        lastCords.x = dots[_dotNum].getAttribute('cx')
+                        lastCords.y = dots[_dotNum].getAttribute('cy')
+                    }
+                    counter++;
+                }
+            })
+
         }
 
         function end() {
@@ -104,6 +146,7 @@
             svg.removeClass('success error')
             lines.empty()
             actives.empty()
+            arrows.empty();
         }
 
         function preventDefault(e) {
@@ -163,6 +206,7 @@
                 let pos = svgPosition(e.target, e)
                 line.setAttribute('x2', pos.x)
                 line.setAttribute('y2', pos.y)
+
                 return false
             }
         }
@@ -190,6 +234,42 @@
             let y = target.getAttribute('cy')
             line.setAttribute('x2', x)
             line.setAttribute('y2', y)
+
+            let _pos = {
+                x1: parseInt(line.getAttribute('x1')),
+                y1: parseInt(line.getAttribute('y1')),
+                x2: parseInt(line.getAttribute('x2')),
+                y2: parseInt(line.getAttribute('y2')),
+            }
+            let _rot = getArrowRot(_pos.x1, _pos.x2, _pos.y1, _pos.y2)
+            arrows.append(createNewArrow(_pos.x1 + (_pos.x2-_pos.x1)/2,_pos.y1 + (_pos.y2-_pos.y1)/2, _rot))
+        }
+
+        function getArrowRot(x1, x2, y1, y2) {
+            //Dir x = 1 derecha, x = -1 Izq | y = 1 Abajo, y = -1 arriba
+            let _dir = {
+                x: 0,
+                y: 0};
+
+            _dir.x = x2 > x1 ? 1 : x2 < x1 ? -1 : 0;
+            _dir.y = y2 > y1 ? 1 : y2 < y1 ? -1 : 0;
+
+            if (_dir.x == 1 && _dir.y == 0)
+                return 0;
+            if (_dir.x == -1 && _dir.y == 0)
+                return 180;
+            if (_dir.x == 0 && _dir.y == 1)
+                return 90;
+            if (_dir.x == 0 && _dir.y == -1)
+                return 270;
+            if (_dir.x == 1 && _dir.y == 1)
+                return 45;
+            if (_dir.x == 1 && _dir.y == -1)
+                return 315;
+            if (_dir.x == -1 && _dir.y == 1)
+                return 135;
+            if (_dir.x == -1 && _dir.y == -1)
+                return 225;
         }
 
         function beginTrack(target) {
@@ -226,6 +306,21 @@
                 line.setAttribute('y2', y2)
             }
             return line
+        }
+
+        function createNewArrow(x, y, rot) {
+
+            var arrow = document.createElementNS(svgns, "polygon");
+            const w = 4;
+            const h = 3;
+
+            let p1 = {x: x-w/2, y: y-h/2};
+            let p2 = {x: x-w/2, y: y+h/2};
+            let p3 = {x: x+w/2, y: y};
+
+            arrow.setAttribute('points', `${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y} ${p1.x},${p1.y}`)
+            arrow.setAttribute('transform', `rotate(${rot},${x},${y})`)
+            return arrow;
         }
 
         function getMousePos(e) {
